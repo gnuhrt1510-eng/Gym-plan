@@ -4,6 +4,7 @@ import { formatDate, startOfWeek, today } from '../lib/date'
 import { estimate1RM, logVolume } from '../lib/progression'
 import type { Update } from '../lib/store'
 import type { AppState } from '../types'
+import ConfirmButton from './ConfirmButton'
 import LineChart from './LineChart'
 
 const short = (iso: string) => {
@@ -47,9 +48,7 @@ export default function ProgressTab({ state, update }: { state: AppState; update
     setBw('')
   }
 
-  const deleteLog = (id: string) => {
-    if (confirm('Xoá buổi tập này khỏi lịch sử? (Mức tạ hiện tại không thay đổi)')) update((s) => ({ ...s, logs: s.logs.filter((l) => l.id !== id) }))
-  }
+  const deleteLog = (id: string) => update((s) => ({ ...s, logs: s.logs.filter((l) => l.id !== id) }))
 
   return (
     <div className="stack">
@@ -140,9 +139,9 @@ export default function ProgressTab({ state, update }: { state: AppState; update
                     ✓ {done}/{total} set · {mins} phút · {l.changes.filter((c) => c.outcome === 'up').length} bài tăng tạ
                   </div>
                 </div>
-                <button className="btn ghost small" onClick={() => deleteLog(l.id)} aria-label="Xoá">
+                <ConfirmButton className="btn ghost small" confirmLabel="Xoá?" ariaLabel="Xoá buổi tập" onConfirm={() => deleteLog(l.id)}>
                   ✕
-                </button>
+                </ConfirmButton>
               </li>
             )
           })}

@@ -20,23 +20,41 @@
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f4f5f7;
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f5f2;
     --surface: #ffffff;
-    --surface-2: #eef0f3;
-    --border: #dfe2e8;
-    --text: #15181e;
-    --muted: #646b7a;
+    --surface-2: #ebeee9;
+    --border: #d9ded6;
+    --text: #151a16;
+    --muted: #5f6b62;
     --accent: #2e9e3a;
     --accent-ink: #ffffff;
     --c1: #2e9e3a;
     --c2: #2f6fd6;
     --c3: #d9771f;
     --p: #2f6fd6;
-    --c: #c79a14;
+    --c: #b98d10;
     --f: #c2489f;
     color-scheme: light;
   }
+}
+
+:root[data-theme="light"] {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --surface-2: #ebeee9;
+  --border: #d9ded6;
+  --text: #151a16;
+  --muted: #5f6b62;
+  --accent: #2e9e3a;
+  --accent-ink: #ffffff;
+  --c1: #2e9e3a;
+  --c2: #2f6fd6;
+  --c3: #d9771f;
+  --p: #2f6fd6;
+  --c: #b98d10;
+  --f: #c2489f;
+  color-scheme: light;
 }
 
 * {
@@ -73,7 +91,10 @@ p {
 }
 
 .content {
-  padding: 20px 16px calc(96px + env(safe-area-inset-bottom));
+  padding-top: 20px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
 .stack {
@@ -623,7 +644,7 @@ input.mini {
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--border);
-  padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  padding: 6px max(6px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px));
   z-index: 10;
 }
 .tabbar button {
@@ -646,4 +667,34 @@ input.mini {
 }
 .tab-icon {
   font-size: 1.25rem;
+}
+
+.btn.armed {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  white-space: normal;
+}
+
+textarea.backup {
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+  resize: vertical;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

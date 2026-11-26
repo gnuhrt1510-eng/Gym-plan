@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import ConfirmButton from './ConfirmButton'
 import { EXERCISE_MAP, PROGRAMS, PROGRAM_MAP } from '../data/programs'
 import { ACTIVITY_LEVELS, computeTargets, GOAL_LABEL } from '../lib/nutrition'
 import { currentWeight } from '../lib/progression'
@@ -13,26 +15,28 @@ export default function SettingsTab({ state, update, replace }: { state: AppStat
   const program = PROGRAM_MAP[state.programId]
   const exerciseIds = [...new Set(program.days.flatMap((d) => d.exercises.map((e) => e.exerciseId)))]
 
+  const [backup, setBackup] = useState('')
+  const [message, setMessage] = useState('')
+
   const exportData = () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `gym-plan-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
+    const json = JSON.stringify(state)
+    setBackup(json)
+    navigator.clipboard
+      ?.writeText(json)
+      .then(() => setMessage('Đã copy dữ liệu. Dán vào ghi chú/Zalo để lưu lại.'))
+      .catch(() => setMessage('Không copy tự động được — hãy chọn đoạn bên dưới và copy.'))
   }
 
-  const importData = (file: File) => {
-    file.text().then((txt) => {
-      try {
-        const data = JSON.parse(txt) as AppState
-        if (data.version !== 1 || !Array.isArray(data.logs)) throw new Error('bad')
-        replace({ ...DEFAULT_STATE, ...data })
-        alert('Đã nhập dữ liệu.')
-      } catch {
-        alert('File không hợp lệ.')
-      }
-    })
+  const importText = (txt: string) => {
+    try {
+      const data = JSON.parse(txt) as AppState
+      if (data.version !== 1 || !Array.isArray(data.logs)) throw new Error('bad')
+      replace({ ...DEFAULT_STATE, ...data })
+      setMessage('Đã khôi phục dữ liệu.')
+      setBackup('')
+    } catch {
+      setMessage('Dữ liệu không hợp lệ. Kiểm tra lại đoạn đã dán.')
+    }
   }
 
   return (
@@ -150,19 +154,34 @@ export default function SettingsTab({ state, update, replace }: { state: AppStat
 
       <section className="card">
         <h2>Dữ liệu</h2>
-        <p className="muted small">Dữ liệu lưu trên trình duyệt của máy này. Xuất file để sao lưu hoặc chuyển máy.</p>
+        <p className="muted small">Dữ liệu lưu trên trình duyệt của máy này. Sao lưu để chuyển máy hoặc phòng mất dữ liệu.</p>
         <div className="row gap wrap">
           <button className="btn" onClick={exportData}>
-            ⬇ Xuất JSON
+            Sao lưu (copy)
           </button>
           <label className="btn">
-            ⬆ Nhập JSON
-            <input type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && importData(e.target.files[0])} />
+            Nhập từ file
+            <input id="import-file" type="file" accept="application/json,.json,.txt" hidden onChange={(e) => e.target.files?.[0]?.text().then(importText)} />
           </label>
-          <button className="btn danger" onClick={() => confirm('Xoá toàn bộ dữ liệu?') && replace(DEFAULT_STATE)}>
+          <ConfirmButton className="btn danger" confirmLabel="Bấm lần nữa để xoá hết" onConfirm={() => replace(DEFAULT_STATE)}>
             Xoá hết
-          </button>
+          </ConfirmButton>
         </div>
+        <textarea
+          id="backup-text"
+          className="backup"
+          rows={3}
+          placeholder="Hoặc dán dữ liệu sao lưu vào đây…"
+          value={backup}
+          onChange={(e) => setBackup(e.target.value)}
+          onFocus={(e) => e.target.select()}
+        />
+        {backup && !message.startsWith('Đã copy') && (
+          <button className="btn primary" onClick={() => importText(backup)}>
+            Khôi phục từ đoạn đã dán
+          </button>
+        )}
+        {message && <p className="small">{message}</p>}
       </section>
     </div>
   )

@@ -3,6 +3,7 @@ import { EXERCISE_MAP, PROGRAM_MAP } from '../data/programs'
 import { formatDate, startOfWeek, today } from '../lib/date'
 import { currentWeight, newExerciseLog, nextProgress } from '../lib/progression'
 import { uid, type Update } from '../lib/store'
+import ConfirmButton from './ConfirmButton'
 import type { AppState, Draft, ExerciseLog, Outcome, ProgramDay, SessionLog } from '../types'
 
 const OUTCOME_TEXT: Record<Outcome, string> = {
@@ -190,7 +191,6 @@ function ActiveSession({
   }
 
   const finish = () => {
-    if (doneSets === 0 && !confirm('Chưa tích set nào. Vẫn lưu buổi tập?')) return
     const nextState = { ...progress }
     const changes = draft.exercises.map((e) => {
       const { state: next, outcome } = nextProgress(e, EXERCISE_MAP[e.exerciseId], nextState[e.exerciseId])
@@ -213,9 +213,7 @@ function ActiveSession({
     onFinish(log)
   }
 
-  const cancel = () => {
-    if (confirm('Huỷ buổi tập này? Dữ liệu buổi hiện tại sẽ mất.')) update((s) => ({ ...s, draft: null }))
-  }
+  const cancel = () => update((s) => ({ ...s, draft: null }))
 
   const pct = totalSets ? Math.round((doneSets / totalSets) * 100) : 0
 
@@ -307,12 +305,12 @@ function ActiveSession({
 
       <p className="muted small center">Ghi lại số rep thực tế nếu không đạt. Đủ rep tối đa ở mọi set → buổi sau tự tăng tạ.</p>
       <div className="row gap">
-        <button className="btn ghost grow" onClick={cancel}>
+        <ConfirmButton className="btn ghost grow" confirmLabel="Bấm lần nữa để huỷ" onConfirm={cancel}>
           Huỷ
-        </button>
-        <button className="btn primary grow" onClick={finish}>
+        </ConfirmButton>
+        <ConfirmButton className="btn primary grow" confirmLabel="Chưa tích set nào — bấm lần nữa để lưu" skip={doneSets > 0} onConfirm={finish}>
           Hoàn thành buổi tập
-        </button>
+        </ConfirmButton>
       </div>
     </div>
   )
