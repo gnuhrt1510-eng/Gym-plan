@@ -162,3 +162,21 @@ describe('cloud chunks', () => {
     expect(isPristine(s)).toBe(false)
   })
 })
+
+describe('activity calendar', () => {
+  it('mức độ ngày và chuỗi tuần đạt mục tiêu', async () => {
+    const { buildDays, dayLevel, weekStreak } = await import('../components/ActivityCalendar')
+    const log = (date: string, sets: number) => ({
+      id: date, date, programId: 'my4', dayId: 'x', dayName: 'x', startedAt: 0, finishedAt: 0, changes: [],
+      exercises: [{ exerciseId: 'bench', weight: 40, repsMin: 6, repsMax: 10, restSec: 90, sets: Array.from({ length: sets }, () => ({ reps: 8, done: true })) }],
+    })
+    // tuần 16–22/11 và 23–29/11/2026 (T2 = 16, 23)
+    const logs = ['2026-11-16', '2026-11-17', '2026-11-19', '2026-11-20', '2026-11-23', '2026-11-24'].map((d) => log(d, 16))
+    const run = { id: 'r', title: 'r', startedAt: new Date(2026, 10, 24, 6).getTime(), durationMs: 1, distanceM: 3000, steps: 0, stepsEstimated: true, kcal: 0, points: [], source: 'gps' as const }
+    const days = buildDays(logs, [run])
+    expect(dayLevel(days.get('2026-11-16'))).toBe(2)
+    expect(dayLevel(days.get('2026-11-24'))).toBe(3)
+    expect(dayLevel(days.get('2026-11-18'))).toBe(0)
+    expect(weekStreak(days, 4, '2026-11-25')).toBe(1) // tuần trước đạt 4, tuần này mới 2
+  })
+})

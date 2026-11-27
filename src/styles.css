@@ -30,13 +30,16 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 17px;
+}
 html,
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 1rem;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -78,7 +81,7 @@ h2 {
   color: var(--muted);
 }
 .small {
-  font-size: 0.84rem;
+  font-size: 0.92rem;
 }
 .center {
   text-align: center;
@@ -90,7 +93,7 @@ h2 {
   padding: 8px 0;
 }
 .eyebrow {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -179,7 +182,7 @@ h2 {
 }
 .tabbar button {
   font: inherit;
-  font-size: 0.64rem;
+  font-size: 0.7rem;
   font-weight: 600;
   display: flex;
   flex-direction: column;
@@ -562,7 +565,7 @@ textarea.backup {
   gap: 6px 14px;
   margin-top: 8px;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.95rem;
 }
 .meta-i {
   display: inline-flex;
@@ -596,7 +599,7 @@ textarea.backup {
 }
 .muscle-card {
   flex: 0 0 auto;
-  min-width: 150px;
+  min-width: 160px;
   scroll-snap-align: start;
   background: var(--surface-2);
   border-radius: 18px;
@@ -608,10 +611,10 @@ textarea.backup {
 .mc-name {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
 }
 .mc-count {
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   color: var(--muted);
 }
 .mc-count b {
@@ -620,12 +623,12 @@ textarea.backup {
 .mc-dots {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
-  max-width: 130px;
+  gap: 4px;
+  max-width: 150px;
 }
 .mc-dots i {
-  width: 5px;
-  height: 5px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--surface-3);
 }
@@ -657,13 +660,14 @@ textarea.backup {
 }
 .exp-name {
   font-weight: 600;
+  font-size: 1.06rem;
 }
 .exp-sub {
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   color: var(--muted);
 }
 .exp-sets {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -671,7 +675,7 @@ textarea.backup {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--accent);
   white-space: nowrap;
@@ -809,7 +813,7 @@ textarea.backup {
   min-width: 0;
 }
 .exc-meta {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -1720,7 +1724,7 @@ textarea.backup {
   overflow: visible;
 }
 .mm-fig figcaption {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1832,4 +1836,213 @@ ellipse.mm-o {
   50% {
     opacity: 0.3;
   }
+}
+
+/* hình phóng to vùng cơ */
+.mm-fig.zoomed svg {
+  overflow: hidden;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 40%, rgba(212, 255, 58, 0.08), transparent 70%), var(--bg);
+}
+.mm-fig.zoomed polygon,
+.mm-fig.zoomed ellipse {
+  stroke-width: 0.6;
+}
+.ex-pills li {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-radius: 26px;
+}
+.ex-collapsed {
+  border-radius: 24px;
+}
+
+/* ---------- lịch tập (heatmap + tháng) ---------- */
+.heat-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.heat-months {
+  display: grid;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  height: 1.1em;
+}
+.heat-months span {
+  grid-row: 1;
+  white-space: nowrap;
+}
+.heat {
+  display: grid;
+  grid-template-rows: repeat(7, auto);
+  gap: 3px;
+}
+.hc {
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 3px;
+  border: none;
+  padding: 0;
+  background: var(--surface-3);
+  cursor: pointer;
+}
+.hc.l1 {
+  background: rgba(212, 255, 58, 0.35);
+}
+.hc.l2 {
+  background: rgba(212, 255, 58, 0.65);
+}
+.hc.l3 {
+  background: var(--accent);
+}
+.hc.future {
+  background: transparent;
+  cursor: default;
+}
+.hc.today {
+  outline: 1.5px solid var(--text);
+  outline-offset: 1px;
+}
+.hc.picked {
+  outline: 2px solid var(--c2);
+  outline-offset: 1px;
+}
+.chip-stat {
+  font-size: 0.88rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+.chip-stat b {
+  color: var(--accent);
+}
+
+.cal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.cal-head,
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.cal-head span {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.cd {
+  font: inherit;
+  color: var(--text);
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 0;
+}
+.cd.out {
+  color: var(--muted);
+  opacity: 0.45;
+}
+.cd.active {
+  background: var(--surface-3);
+}
+.cd.active .num {
+  font-weight: 700;
+}
+.cd.today {
+  border-color: var(--accent);
+}
+.cd.picked {
+  border-color: var(--c2);
+  border-width: 2px;
+}
+.cd-dots {
+  display: flex;
+  gap: 3px;
+  height: 5px;
+}
+.cd-dots i,
+.day-detail i,
+.legend-row i.g,
+.legend-row i.r {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+i.g {
+  background: var(--accent);
+}
+i.r {
+  background: var(--c2);
+}
+.cal-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+.cal-month {
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+.btn.small-round {
+  width: 38px;
+  height: 38px;
+  font-size: 1.15rem;
+}
+.day-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--surface-2);
+}
+.day-detail ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.day-detail i {
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+.legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+}
+.legend-row i {
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+.heat-scale {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+}
+.heat-scale .hc {
+  width: 11px;
+  cursor: default;
 }

@@ -155,7 +155,7 @@ export default function WorkoutTab({ state, update }: Props) {
                     const dots = Math.max(planned, 1)
                     return (
                       <div key={g} className="muscle-card">
-                        <MuscleMap muscles={GROUP_MUSCLES[g] ?? []} size={70} />
+                        <MuscleMap muscles={GROUP_MUSCLES[g] ?? []} size={96} zoom />
                         <span className="mc-name">{g}</span>
                         <span className="mc-count num">
                           <b>{done}</b>/{planned} set tuần này
@@ -177,7 +177,7 @@ export default function WorkoutTab({ state, update }: Props) {
                     return (
                       <li key={pe.exerciseId}>
                         <span className="exp-thumb">
-                          <MuscleMap targets={EXERCISE_MUSCLES[pe.exerciseId]} size={56} />
+                          <MuscleMap targets={EXERCISE_MUSCLES[pe.exerciseId]} size={64} zoom />
                         </span>
                         <div className="exp-main">
                           <span className="exp-name">{ex.name}</span>
@@ -393,7 +393,7 @@ function ActiveSession({
             <button key={e.exerciseId + i} className={`ex-collapsed ${allDone ? 'complete' : ''}`} onClick={() => setOpen(i)}>
               <span className={`exc-check ${allDone ? 'on' : ''}`}>{allDone && <IconCheck size={14} />}</span>
               <span className="exc-thumb">
-                <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} size={40} />
+                <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} size={48} zoom />
               </span>
               <span className="exc-name">{def.name}</span>
               <span className="exc-meta num">
@@ -415,7 +415,7 @@ function ActiveSession({
                   {def.nameEn} · mục tiêu {e.repsMin}-{e.repsMax} rep
                 </p>
               </div>
-              {EXERCISE_MUSCLES[e.exerciseId] && <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} views="both" size={116} labels />}
+              {EXERCISE_MUSCLES[e.exerciseId] && <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} views="both" size={150} labels />}
             </div>
             {EXERCISE_MUSCLES[e.exerciseId] && <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} figures={false} legend />}
             <div className="weight-ctrl">

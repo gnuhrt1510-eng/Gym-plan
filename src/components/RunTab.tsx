@@ -40,7 +40,7 @@ function loadRuns(): Run[] {
   }
 }
 
-function useRuns() {
+export function useRuns() {
   const [runs, setRuns] = useState<Run[]>(loadRuns)
   useEffect(() => {
     try {
@@ -72,8 +72,15 @@ function fmtWhen(ts: number) {
 }
 
 /** Chiều cao, cân nặng lấy (chỉ đọc) từ phần Cài đặt để ước tính bước & calo */
-export default function RunTab({ body }: { body: { weightKg: number; heightCm: number } }) {
-  const [runs, setRuns] = useRuns()
+export default function RunTab({
+  body,
+  runs,
+  setRuns,
+}: {
+  body: { weightKg: number; heightCm: number }
+  runs: Run[]
+  setRuns: (fn: (rs: Run[]) => Run[]) => void
+}) {
   const rec = useRunRecorder()
   const [openId, setOpenId] = useState<string | null>(null)
   const [importMsg, setImportMsg] = useState('')

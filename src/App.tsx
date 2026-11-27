@@ -6,7 +6,7 @@ import WorkoutTab from './components/WorkoutTab'
 import ProgressTab from './components/ProgressTab'
 import MealTab from './components/MealTab'
 import SettingsTab from './components/SettingsTab'
-import RunTab from './components/RunTab'
+import RunTab, { useRuns } from './components/RunTab'
 import { IconBolt, IconBowl, IconChart, IconDumbbell, IconRun, IconSliders } from './components/Icons'
 
 type Tab = 'workout' | 'run' | 'progress' | 'meal' | 'settings'
@@ -21,6 +21,7 @@ const TABS: { id: Tab; label: string; Icon: ComponentType<{ size?: number }> }[]
 
 export default function App() {
   const [state, setState] = useAppState()
+  const [runs, setRuns] = useRuns()
   const [tab, setTab] = useState<Tab>('workout')
   const update: Update = (fn) => setState((s) => fn(s))
 
@@ -37,8 +38,8 @@ export default function App() {
       </div>
       <main className="content">
         {tab === 'workout' && <WorkoutTab state={state} update={update} />}
-        {tab === 'run' && <RunTab body={{ weightKg: state.profile.weightKg, heightCm: state.profile.heightCm }} />}
-        {tab === 'progress' && <ProgressTab state={state} update={update} />}
+        {tab === 'run' && <RunTab body={{ weightKg: state.profile.weightKg, heightCm: state.profile.heightCm }} runs={runs} setRuns={setRuns} />}
+        {tab === 'progress' && <ProgressTab state={state} update={update} runs={runs} />}
         {tab === 'meal' && <MealTab state={state} update={update} onOpenSettings={() => {
               setTab('settings')
               window.scrollTo(0, 0)

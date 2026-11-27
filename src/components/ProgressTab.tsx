@@ -6,13 +6,15 @@ import type { Update } from '../lib/store'
 import type { AppState } from '../types'
 import ConfirmButton from './ConfirmButton'
 import LineChart from './LineChart'
+import ActivityCalendar from './ActivityCalendar'
+import type { Run } from '../lib/run'
 
 const short = (iso: string) => {
   const [, m, d] = iso.split('-')
   return `${Number(d)}/${Number(m)}`
 }
 
-export default function ProgressTab({ state, update }: { state: AppState; update: Update }) {
+export default function ProgressTab({ state, update, runs }: { state: AppState; update: Update; runs: Run[] }) {
   const exerciseIds = useMemo(() => {
     const ids = new Set<string>()
     state.logs.forEach((l) => l.exercises.forEach((e) => ids.add(e.exerciseId)))
@@ -70,6 +72,8 @@ export default function ProgressTab({ state, update }: { state: AppState; update
           <span>Tổng khối lượng</span>
         </div>
       </div>
+
+      <ActivityCalendar logs={state.logs} runs={runs} target={state.trainingDays.length} />
 
       <section className="card">
         <h2>Khối lượng tạ theo thời gian</h2>

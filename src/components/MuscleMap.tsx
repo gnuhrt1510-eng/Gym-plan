@@ -53,12 +53,81 @@ function mirror(pts: string): string {
     .join(' ')
 }
 
-function Figure({ view, primary, secondary, size, label }: { view: 'front' | 'back'; primary: Set<MuscleId>; secondary: Set<MuscleId>; size: number; label?: boolean }) {
+/** Khung nhìn sát vùng cơ được tô (tỉ lệ rộng/cao = aspect) */
+export function zoomBox(view: 'front' | 'back', ids: Set<MuscleId>, aspect = 0.8): [number, number, number, number] {
+  const parts = (view === 'front' ? FRONT_PARTS : BACK_PARTS).filter((p) => p.id && ids.has(p.id))
+  if (parts.length === 0) return [16, 0, 68, 194]
+  const xs: number[] = []
+  const ys: number[] = []
+  for (const p of parts)
+    for (const pt of p.pts.split(' ')) {
+      const [x, y] = pt.split(',').map(Number)
+      xs.push(x)
+      ys.push(y)
+    }
+  let minX = Math.min(...xs)
+  let maxX = Math.max(...xs)
+  // Cơ ở giữa thân (ngực, bụng, lưng…) → lấy cả hai bên; cơ ở tay/chân → một bên là đủ
+  if (minX < 56) minX = 100 - maxX
+  const pad = 7
+  let x0 = minX - pad
+  let x1 = maxX + pad
+  let y0 = Math.min(...ys) - pad
+  let y1 = Math.max(...ys) + pad
+  // đủ lớn để còn thấy vùng xung quanh, rồi chỉnh theo tỉ lệ khung
+  const minH = 48
+  if (y1 - y0 < minH) {
+    const c = (y0 + y1) / 2
+    y0 = c - minH / 2
+    y1 = c + minH / 2
+  }
+  let w = x1 - x0
+  let h = y1 - y0
+  if (w / h < aspect) {
+    const nw = h * aspect
+    x0 -= (nw - w) / 2
+    w = nw
+  } else {
+    const nh = w / aspect
+    y0 -= (nh - h) / 2
+    h = nh
+  }
+  x1 = x0 + w
+  y1 = y0 + h
+  // giữ trong hình
+  if (y0 < -4) {
+    y1 -= y0 + 4
+    y0 = -4
+  }
+  if (y1 > 196) {
+    y0 -= y1 - 196
+    y1 = 196
+  }
+  return [x0, y0, x1 - x0, y1 - y0]
+}
+
+function Figure({
+  view,
+  primary,
+  secondary,
+  size,
+  label,
+  zoom,
+}: {
+  view: 'front' | 'back'
+  primary: Set<MuscleId>
+  secondary: Set<MuscleId>
+  size: number
+  label?: boolean
+  zoom?: boolean
+}) {
   const parts = view === 'front' ? FRONT_PARTS : BACK_PARTS
   const cls = (id: MuscleId | null) => (id && primary.has(id) ? 'mm-p' : id && secondary.has(id) ? 'mm-s' : 'mm-o')
+  const box = zoom ? zoomBox(view, primary.size ? primary : secondary) : [16, 0, 68, 194]
+  const width = zoom ? size * 0.8 : size * 0.35
   return (
-    <figure className="mm-fig">
-      <svg viewBox="16 0 68 194" width={size * 0.35} height={size} aria-hidden="true">
+    <figure className={`mm-fig ${zoom ? 'zoomed' : ''}`}>
+      <svg viewBox={box.map((n) => n.toFixed(1)).join(' ')} width={width} height={size} aria-hidden="true" preserveAspectRatio="xMidYMid meet">
         <ellipse cx="50" cy="13.5" rx="8" ry="10" className="mm-o" />
         {parts.map((p, i) => (
           <g key={i} className={cls(p.id)}>
@@ -80,6 +149,7 @@ export default function MuscleMap({
   labels = false,
   legend = false,
   figures = true,
+  zoom = false,
 }: {
   targets?: MuscleTargets
   /** tô một danh sách cơ như cơ chính (dùng cho thẻ nhóm cơ) */
@@ -90,6 +160,8 @@ export default function MuscleMap({
   legend?: boolean
   /** false = chỉ hiện chú thích */
   figures?: boolean
+  /** phóng to vào vùng cơ được tô */
+  zoom?: boolean
 }) {
   const tg = targets ?? { primary: muscles ?? [], secondary: [] }
   const primary = new Set(tg.primary)
@@ -101,7 +173,7 @@ export default function MuscleMap({
       {figures && (
       <div className="mm-figs">
         {list.map((v) => (
-          <Figure key={v} view={v} primary={primary} secondary={secondary} size={size} label={labels} />
+          <Figure key={v} view={v} primary={primary} secondary={secondary} size={size} label={labels} zoom={zoom} />
         ))}
       </div>
       )}
