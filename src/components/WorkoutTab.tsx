@@ -7,6 +7,8 @@ import type { AppState, Draft, ExerciseLog, Outcome, ProgramDay, ProgressChange,
 import ConfirmButton from './ConfirmButton'
 import { IconArrowUp, IconCheck, IconChevron, IconClock, IconLayers, IconPlay } from './Icons'
 import Ring from './Ring'
+import MuscleMap from './MuscleMap'
+import { EXERCISE_MUSCLES, GROUP_MUSCLES } from '../data/muscles'
 import PlanOverview, { setsPerGroup, weekSchedule } from './PlanOverview'
 
 const OUTCOME_TEXT: Record<Outcome, string> = {
@@ -60,6 +62,7 @@ export default function WorkoutTab({ state, update }: Props) {
   const plannedByGroup = new Map(setsPerGroup(schedule).map((v) => [v.group, v.sets]))
 
   const start = (d: ProgramDay) => {
+    window.scrollTo(0, 0)
     update((s) => ({
       ...s,
       draft: {
@@ -152,6 +155,7 @@ export default function WorkoutTab({ state, update }: Props) {
                     const dots = Math.max(planned, 1)
                     return (
                       <div key={g} className="muscle-card">
+                        <MuscleMap muscles={GROUP_MUSCLES[g] ?? []} size={70} />
                         <span className="mc-name">{g}</span>
                         <span className="mc-count num">
                           <b>{done}</b>/{planned} set tuần này
@@ -172,6 +176,9 @@ export default function WorkoutTab({ state, update }: Props) {
                     const ch = lastChange[pe.exerciseId]
                     return (
                       <li key={pe.exerciseId}>
+                        <span className="exp-thumb">
+                          <MuscleMap targets={EXERCISE_MUSCLES[pe.exerciseId]} size={56} />
+                        </span>
                         <div className="exp-main">
                           <span className="exp-name">{ex.name}</span>
                           <span className="exp-sub num">
@@ -385,6 +392,9 @@ function ActiveSession({
           return (
             <button key={e.exerciseId + i} className={`ex-collapsed ${allDone ? 'complete' : ''}`} onClick={() => setOpen(i)}>
               <span className={`exc-check ${allDone ? 'on' : ''}`}>{allDone && <IconCheck size={14} />}</span>
+              <span className="exc-thumb">
+                <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} size={40} />
+              </span>
               <span className="exc-name">{def.name}</span>
               <span className="exc-meta num">
                 {done}/{e.sets.length} · {formatWeight(def, e.weight)}
@@ -395,15 +405,19 @@ function ActiveSession({
         }
         return (
           <section key={e.exerciseId + i} className="card ex-open">
-            <div>
-              <p className="eyebrow">
-                Bài {i + 1}/{draft.exercises.length} · {def.muscle}
-              </p>
-              <h2 className="display-sm">{def.name}</h2>
-              <p className="muted small">
-                {def.nameEn} · mục tiêu {e.repsMin}-{e.repsMax} rep
-              </p>
+            <div className="ex-open-head">
+              <div className="ex-open-text">
+                <p className="eyebrow">
+                  Bài {i + 1}/{draft.exercises.length}
+                </p>
+                <h2 className="display-sm">{def.name}</h2>
+                <p className="muted small">
+                  {def.nameEn} · mục tiêu {e.repsMin}-{e.repsMax} rep
+                </p>
+              </div>
+              {EXERCISE_MUSCLES[e.exerciseId] && <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} views="both" size={116} labels />}
             </div>
+            {EXERCISE_MUSCLES[e.exerciseId] && <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} figures={false} legend />}
             <div className="weight-ctrl">
               <button className="btn round" aria-label="Giảm tạ" onClick={() => editExercise(i, (x) => ({ ...x, weight: Math.max(0, x.weight - def.increment) }))}>
                 −

@@ -129,3 +129,16 @@ describe('plan overview', () => {
     expect(vol['Vai']).toBe(13)
   })
 })
+
+describe('muscle map data', () => {
+  it('mọi bài tập đều có cơ chính và mặt hình phù hợp', async () => {
+    const { EXERCISES } = await import('../data/programs')
+    const { EXERCISE_MUSCLES, bestView } = await import('../data/muscles')
+    for (const ex of EXERCISES) {
+      expect(EXERCISE_MUSCLES[ex.id]?.primary.length, ex.id).toBeGreaterThan(0)
+    }
+    expect(bestView(EXERCISE_MUSCLES.bench)).toBe('front')
+    expect(bestView(EXERCISE_MUSCLES.pulldown)).toBe('back')
+    expect(bestView(EXERCISE_MUSCLES.legcurl)).toBe('back')
+  })
+})

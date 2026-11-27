@@ -1696,3 +1696,98 @@ textarea.backup {
 .frame-note b {
   color: var(--warn);
 }
+
+/* ---------- muscle map ---------- */
+.muscle-map {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mm-figs {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.mm-fig {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.mm-fig svg {
+  display: block;
+  overflow: visible;
+}
+.mm-fig figcaption {
+  font-size: 0.62rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.mm-fig polygon,
+.mm-fig ellipse {
+  stroke: var(--bg);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+.mm-o polygon,
+ellipse.mm-o {
+  fill: #3a3f48;
+}
+.mm-s polygon {
+  fill: rgba(212, 255, 58, 0.4);
+}
+.mm-p polygon {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 2px rgba(212, 255, 58, 0.55));
+}
+.mm-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.mm-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  margin-right: 3px;
+  vertical-align: -1px;
+}
+.mm-dot.p {
+  background: var(--accent);
+}
+.mm-dot.s {
+  background: rgba(212, 255, 58, 0.4);
+}
+.ex-open-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.ex-open-text {
+  min-width: 0;
+}
+.ex-open-head .muscle-map {
+  flex: none;
+  padding: 8px 10px 6px;
+  border-radius: 16px;
+  background: var(--surface-2);
+}
+.exp-thumb,
+.exc-thumb {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+.ex-pills li {
+  padding-left: 12px;
+}
+.muscle-card .muscle-map {
+  align-items: flex-start;
+}
+.muscle-card .mm-figs {
+  justify-content: flex-start;
+}
