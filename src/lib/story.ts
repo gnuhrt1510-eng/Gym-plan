@@ -19,7 +19,7 @@ function dateLabel(ts: number): string {
  */
 /**
  * Kiểu Strava: nền trong suốt (hoặc ảnh của bạn), đường chạy trắng mảnh,
- * hàng thông số "Chạy · Pace · Thời gian" ở dưới.
+ * hàng thông số "Run · Pace · Time" ở dưới.
  */
 async function renderOverlay(run: Run, photo?: CanvasImageSource & { width: number; height: number }): Promise<Blob> {
   const canvas = document.createElement('canvas')
@@ -82,9 +82,9 @@ async function renderOverlay(run: Run, photo?: CanvasImageSource & { width: numb
 
   // ---- hàng thông số ----
   const stats: [string, string][] = [
-    ['Chạy', `${formatKm(run.distanceM)} km`],
+    ['Run', `${formatKm(run.distanceM)} km`],
     ['Pace', formatPace(paceSecPerKm(run.distanceM, run.durationMs))],
-    ['Thời gian', formatDuration(run.durationMs)],
+    ['Time', formatDuration(run.durationMs)],
   ]
   const x0 = 165
   const xs = [x0, x0 + 300, x0 + 495]

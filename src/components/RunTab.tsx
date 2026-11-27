@@ -427,7 +427,7 @@ function RunDetail({ run, onBack, onRename, onDelete }: { run: Run; onBack: () =
       <section className="card">
         <h2>Ảnh story</h2>
         <p className="muted small">
-          Ảnh dọc 1080×1920. Kiểu <b>Strava</b> là PNG nền trong suốt (đường chạy trắng + Chạy · Pace · Thời gian) để bạn ghép lên ảnh bất kỳ, hoặc bấm “Ghép vào ảnh” để app ghép sẵn.
+          Ảnh dọc 1080×1920. Kiểu <b>Strava</b> là PNG nền trong suốt (đường chạy trắng + Run · Pace · Time) để bạn ghép lên ảnh bất kỳ, hoặc bấm “Ghép vào ảnh” để app ghép sẵn.
         </p>
         <div className="seg">
           <button className={preview?.variant === 'overlay' ? 'on' : ''} disabled={busy} onClick={() => void makeStory('overlay')}>
