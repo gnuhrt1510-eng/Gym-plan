@@ -1,6 +1,7 @@
 import { useState, type ComponentType } from 'react'
 import { useAppState, type Update } from './lib/store'
 import { formatDate, today } from './lib/date'
+import { useSyncStatus } from './lib/cloud'
 import WorkoutTab from './components/WorkoutTab'
 import ProgressTab from './components/ProgressTab'
 import MealTab from './components/MealTab'
@@ -29,7 +30,10 @@ export default function App() {
         <span className="brand">
           <IconBolt size={18} /> GYM PLAN
         </span>
-        <span className="topbar-date">{formatDate(today())}</span>
+        <span className="topbar-right">
+          <SaveBadge />
+          <span className="topbar-date">{formatDate(today())}</span>
+        </span>
       </div>
       <main className="content">
         {tab === 'workout' && <WorkoutTab state={state} update={update} />}
@@ -55,5 +59,22 @@ export default function App() {
         </div>
       </nav>
     </div>
+  )
+}
+
+function SaveBadge() {
+  const { status } = useSyncStatus()
+  const map = {
+    synced: ['ok', 'Đã lưu'],
+    saving: ['busy', 'Đang lưu…'],
+    connecting: ['busy', 'Đang tải…'],
+    local: ['local', 'Lưu trên máy'],
+    error: ['err', 'Chưa lưu được'],
+  } as const
+  const [cls, label] = map[status]
+  return (
+    <span className={`save-badge ${cls}`} role="status" title={status === 'local' ? 'Dữ liệu lưu trong trình duyệt của máy này' : 'Dữ liệu lưu vào tài khoản Claude của bạn'}>
+      <i /> {label}
+    </span>
   )
 }

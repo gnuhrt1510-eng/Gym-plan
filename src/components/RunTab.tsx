@@ -15,6 +15,7 @@ import {
   totalDistance,
   type Run,
 } from '../lib/run'
+import { useCloudSync } from '../lib/cloud'
 import { renderStory, shareOrSave, type StoryVariant } from '../lib/story'
 import { elapsedOf, useRunRecorder, type GpsState } from '../lib/useRunRecorder'
 import ConfirmButton from './ConfirmButton'
@@ -48,6 +49,15 @@ function useRuns() {
       /* đầy bộ nhớ */
     }
   }, [runs])
+  // Mỗi buổi chạy một document riêng trên Claude
+  useCloudSync(
+    'runs',
+    runs,
+    setRuns,
+    (rs) => Object.fromEntries(rs.map((r) => [`r-${r.id}`, r as unknown as Record<string, unknown>])),
+    (c) => (Object.values(c) as unknown as Run[]).sort((a, b) => b.startedAt - a.startedAt),
+    (rs) => rs.length === 0,
+  )
   return [runs, setRuns] as const
 }
 

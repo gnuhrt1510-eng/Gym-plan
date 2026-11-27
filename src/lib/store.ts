@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { AppState } from '../types'
+import type { AppState, FoodEntry, SessionLog } from '../types'
+import { byMonth, useCloudSync, type Chunks } from './cloud'
 
 const KEY = 'gymplan:v1'
 
@@ -29,6 +30,39 @@ export function loadState(): AppState {
   }
 }
 
+/** Chia dữ liệu thành các document nhỏ để lưu lên Claude */
+export function appToChunks(s: AppState): Chunks {
+  const { logs, foodLog, ...core } = s
+  const chunks: Chunks = { core: core as unknown as Record<string, unknown> }
+  for (const [m, items] of Object.entries(byMonth(logs, (l) => l.date))) chunks[`logs-${m}`] = { items }
+  const days = Object.keys(foodLog).filter((d) => foodLog[d].length > 0)
+  for (const [m, ds] of Object.entries(byMonth(days, (d) => d))) chunks[`food-${m}`] = { days: Object.fromEntries(ds.map((d) => [d, foodLog[d]])) }
+  return chunks
+}
+
+export function appFromChunks(c: Chunks): AppState {
+  const core = (c.core ?? {}) as Partial<AppState>
+  const logs: SessionLog[] = []
+  const foodLog: Record<string, FoodEntry[]> = {}
+  for (const [k, body] of Object.entries(c)) {
+    if (k.startsWith('logs-')) logs.push(...((body.items as SessionLog[]) ?? []))
+    if (k.startsWith('food-')) Object.assign(foodLog, body.days as Record<string, FoodEntry[]>)
+  }
+  logs.sort((a, b) => a.finishedAt - b.finishedAt)
+  return { ...DEFAULT_STATE, ...core, logs, foodLog }
+}
+
+/** Máy này chưa có dữ liệu gì của người dùng */
+export function isPristine(s: AppState): boolean {
+  return (
+    s.logs.length === 0 &&
+    Object.keys(s.foodLog).length === 0 &&
+    Object.keys(s.progress).length === 0 &&
+    s.bodyWeights.length === 0 &&
+    JSON.stringify(s.profile) === JSON.stringify(DEFAULT_STATE.profile)
+  )
+}
+
 export function useAppState() {
   const [state, setState] = useState<AppState>(loadState)
   useEffect(() => {
@@ -38,6 +72,7 @@ export function useAppState() {
       /* storage full / blocked — keep in memory */
     }
   }, [state])
+  useCloudSync('app', state, setState, appToChunks, appFromChunks, isPristine)
   return [state, setState] as const
 }
 

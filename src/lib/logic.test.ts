@@ -142,3 +142,23 @@ describe('muscle map data', () => {
     expect(bestView(EXERCISE_MUSCLES.legcurl)).toBe('back')
   })
 })
+
+describe('cloud chunks', () => {
+  it('chia rồi ghép lại không mất dữ liệu', async () => {
+    const { DEFAULT_STATE, appToChunks, appFromChunks, isPristine } = await import('./store')
+    const s = {
+      ...DEFAULT_STATE,
+      profile: { ...DEFAULT_STATE.profile, heightCm: 178, weightKg: 72 },
+      logs: [
+        { id: 'a', date: '2026-10-30', programId: 'my4', dayId: 'my4-chest', dayName: 'x', startedAt: 1, finishedAt: 2, exercises: [], changes: [] },
+        { id: 'b', date: '2026-11-02', programId: 'my4', dayId: 'my4-back', dayName: 'y', startedAt: 3, finishedAt: 4, exercises: [], changes: [] },
+      ],
+      foodLog: { '2026-11-02': [{ id: 'f', name: 'Phở', qty: 1, kcal: 450, protein: 25, carbs: 55, fat: 12, time: 5 }] },
+    }
+    const chunks = appToChunks(s)
+    expect(Object.keys(chunks).sort()).toEqual(['core', 'food-2026-11', 'logs-2026-10', 'logs-2026-11'])
+    expect(JSON.parse(JSON.stringify(appFromChunks(JSON.parse(JSON.stringify(chunks)))))).toEqual(JSON.parse(JSON.stringify(s)))
+    expect(isPristine(DEFAULT_STATE)).toBe(true)
+    expect(isPristine(s)).toBe(false)
+  })
+})
