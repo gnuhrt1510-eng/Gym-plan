@@ -2077,3 +2077,41 @@ i.r {
   gap: 0;
   justify-content: space-evenly;
 }
+
+/* ---------- giãn dòng dễ đọc hơn ---------- */
+body {
+  line-height: 1.45;
+}
+h1,
+h2,
+.display,
+.display-sm,
+.ring-big,
+.big-dist span,
+.kcal-big .num {
+  line-height: 1.15;
+}
+.exp-main,
+.log-main,
+.ri-main,
+.sched-name {
+  gap: 4px;
+}
+.exp-sub,
+.exc-meta,
+.mc-count {
+  line-height: 1.35;
+}
+.ex-pills {
+  gap: 12px;
+}
+.ex-pills li {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.stack {
+  gap: 16px;
+}
+.ex-list li {
+  padding: 12px 0;
+}
