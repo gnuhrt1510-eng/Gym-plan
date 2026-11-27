@@ -10,7 +10,7 @@ type Tab = 'workout' | 'progress' | 'meal' | 'settings'
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'workout', label: 'Tập luyện', icon: '🏋️' },
   { id: 'progress', label: 'Tiến độ', icon: '📈' },
-  { id: 'meal', label: 'Meal plan', icon: '🥗' },
+  { id: 'meal', label: 'Ăn uống', icon: '🥗' },
   { id: 'settings', label: 'Cài đặt', icon: '⚙️' },
 ]
 

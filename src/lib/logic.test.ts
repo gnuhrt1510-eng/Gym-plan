@@ -4,6 +4,7 @@ import { MEAL_TEMPLATES, SLOT_SHARE } from '../data/foods'
 import { computeTargets, planDay, scaleMeal } from './nutrition'
 import { estimate1RM, nextProgress, newExerciseLog } from './progression'
 import { addDays, startOfWeek } from './date'
+import { searchDishes, suggestFillers, totalMacros, verdict } from './foodlog'
 
 const squat = EXERCISE_MAP.squat
 const plan = { exerciseId: 'squat', sets: 3, repsMin: 5, repsMax: 8, restSec: 120 }
@@ -89,5 +90,28 @@ describe('date', () => {
     expect(startOfWeek('2026-11-26')).toBe('2026-11-23')
     expect(startOfWeek('2026-11-29')).toBe('2026-11-23')
     expect(addDays('2026-11-30', 1)).toBe('2026-12-01')
+  })
+})
+
+describe('food log', () => {
+  it('tìm món không dấu', () => {
+    expect(searchDishes('pho')[0].name).toMatch(/^Phở/)
+    expect(searchDishes('com ga').map((d) => d.id)).toContain('com-ga')
+    expect(searchDishes('trung')[0].id).toBe('trung')
+    expect(searchDishes('xyz')).toEqual([])
+  })
+
+  it('tổng calo theo số phần và nhận xét đủ/thiếu', () => {
+    const e = (kcal: number, qty: number) => ({ id: 'x', name: 'x', qty, kcal, protein: 10, carbs: 0, fat: 0, time: 0 })
+    const total = totalMacros([e(450, 1), e(72, 3)])
+    expect(total.kcal).toBe(666)
+    expect(total.protein).toBe(40)
+    expect(verdict(1800, 2500)).toEqual({ status: 'short', diff: 700 })
+    expect(verdict(2450, 2500).status).toBe('ok')
+    expect(verdict(2900, 2500)).toEqual({ status: 'over', diff: 400 })
+  })
+
+  it('gợi ý món bù không vượt quá nhiều phần còn thiếu', () => {
+    for (const d of suggestFillers(300, 40)) expect(d.kcal).toBeLessThanOrEqual(400)
   })
 })

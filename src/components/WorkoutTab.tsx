@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { EXERCISE_MAP, PROGRAM_MAP } from '../data/programs'
 import { formatDate, startOfWeek, today } from '../lib/date'
-import { currentWeight, newExerciseLog, nextProgress } from '../lib/progression'
+import { currentWeight, formatWeight, newExerciseLog, nextProgress } from '../lib/progression'
 import { uid, type Update } from '../lib/store'
 import ConfirmButton from './ConfirmButton'
 import type { AppState, Draft, ExerciseLog, Outcome, ProgramDay, SessionLog } from '../types'
@@ -67,7 +67,7 @@ export default function WorkoutTab({ state, update }: Props) {
             {Math.min(weekLogs.length, program.days.length)}/{program.days.length} buổi
           </span>
         </div>
-        <div className="week-grid">
+        <div className="week-grid" style={{ gridTemplateColumns: `repeat(${program.days.length === 4 ? 2 : 3}, 1fr)` }}>
           {program.days.map((d) => {
             const done = weekLogs.some((l) => l.dayId === d.id)
             return (
@@ -100,7 +100,7 @@ export default function WorkoutTab({ state, update }: Props) {
                 <li key={pe.exerciseId}>
                   <span>{ex.name}</span>
                   <span className="muted small">
-                    {pe.sets}×{pe.repsMin}-{pe.repsMax} @ <b>{currentWeight(ex, state.progress)} kg</b>
+                    {pe.sets}×{pe.repsMin}-{pe.repsMax} @ <b>{formatWeight(ex, currentWeight(ex, state.progress))}</b>
                   </span>
                 </li>
               )
@@ -127,7 +127,7 @@ function SummaryCard({ log, onClose }: { log: SessionLog; onClose: () => void })
           <li key={c.exerciseId}>
             <span>{EXERCISE_MAP[c.exerciseId].name}</span>
             <span className={`outcome ${c.outcome}`}>
-              {c.from} → <b>{c.to} kg</b> · {OUTCOME_TEXT[c.outcome]}
+              {c.from} → <b>{formatWeight(EXERCISE_MAP[c.exerciseId], c.to)}</b> · {OUTCOME_TEXT[c.outcome]}
             </span>
           </li>
         ))}
@@ -268,7 +268,7 @@ function ActiveSession({
                   value={e.weight}
                   onChange={(ev) => editExercise(i, (x) => ({ ...x, weight: Number(ev.target.value) || 0 }))}
                 />
-                <span>kg</span>
+                <span>{def.bodyweight ? 'kg đeo thêm' : 'kg'}</span>
               </label>
               <button className="btn round" onClick={() => editExercise(i, (x) => ({ ...x, weight: x.weight + def.increment }))}>
                 +

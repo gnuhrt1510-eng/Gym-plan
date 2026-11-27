@@ -19,6 +19,8 @@ export interface ExerciseDef {
   /** kg added when every set hits the top of the rep range */
   increment: number
   startWeight: number
+  /** bài tạ cơ thể: weight = tạ đeo thêm */
+  bodyweight?: boolean
 }
 
 export interface PlanExercise {
@@ -116,6 +118,19 @@ export interface MealDayState {
   eaten: Partial<Record<MealSlot, boolean>>
 }
 
+export interface FoodEntry {
+  id: string
+  name: string
+  /** số phần (0.5, 1, 1.5…) */
+  qty: number
+  /** dinh dưỡng cho 1 phần */
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+  time: number
+}
+
 export interface BodyWeight {
   date: string
   kg: number
@@ -129,5 +144,6 @@ export interface AppState {
   logs: SessionLog[]
   draft: Draft | null
   meals: Record<string, MealDayState>
+  foodLog: Record<string, FoodEntry[]>
   bodyWeights: BodyWeight[]
 }

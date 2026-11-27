@@ -6,11 +6,12 @@ const KEY = 'gymplan:v1'
 export const DEFAULT_STATE: AppState = {
   version: 1,
   profile: { sex: 'male', age: 25, heightCm: 170, weightKg: 65, activity: 1.55, goal: 'bulk' },
-  programId: 'fullbody3',
+  programId: 'my4',
   progress: {},
   logs: [],
   draft: null,
   meals: {},
+  foodLog: {},
   bodyWeights: [],
 }
 
@@ -18,7 +19,10 @@ export function loadState(): AppState {
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return DEFAULT_STATE
-    return { ...DEFAULT_STATE, ...(JSON.parse(raw) as Partial<AppState>) }
+    const saved = { ...DEFAULT_STATE, ...(JSON.parse(raw) as Partial<AppState>) }
+    // Chưa tập buổi nào với chương trình mặc định cũ → chuyển sang chương trình 4 buổi
+    if (saved.logs.length === 0 && saved.programId === 'fullbody3') saved.programId = 'my4'
+    return saved
   } catch {
     return DEFAULT_STATE
   }

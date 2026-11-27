@@ -12,6 +12,11 @@ export function currentWeight(ex: ExerciseDef, progress: Record<string, Progress
   return progress[ex.id]?.weight ?? ex.startWeight
 }
 
+export function formatWeight(ex: ExerciseDef, weight: number): string {
+  if (ex.bodyweight) return weight > 0 ? `tạ cơ thể +${weight} kg` : 'tạ cơ thể'
+  return `${weight} kg`
+}
+
 export function newExerciseLog(plan: PlanExercise, weight: number): ExerciseLog {
   return {
     exerciseId: plan.exerciseId,
