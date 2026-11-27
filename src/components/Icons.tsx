@@ -69,3 +69,9 @@ export const IconLayers = (p: P) => (
     <path d="M12 3 3 8l9 5 9-5Z M3 13l9 5 9-5" />
   </Svg>
 )
+export const IconRun = (p: P) => (
+  <Svg {...p}>
+    <circle cx="14" cy="4.5" r="1.8" />
+    <path d="M9 20l2.5-5 3 2.5V22M6 12l3-3.5 4 1 2.5 3.5H19M11.5 15l1.5-5.5" />
+  </Svg>
+)
