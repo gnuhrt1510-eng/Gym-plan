@@ -4,6 +4,7 @@ import { formatDate, startOfWeek, today } from '../lib/date'
 import { currentWeight, formatWeight, newExerciseLog, nextProgress } from '../lib/progression'
 import { uid, type Update } from '../lib/store'
 import ConfirmButton from './ConfirmButton'
+import PlanOverview from './PlanOverview'
 import type { AppState, Draft, ExerciseLog, Outcome, ProgramDay, SessionLog } from '../types'
 
 const OUTCOME_TEXT: Record<Outcome, string> = {
@@ -21,6 +22,7 @@ interface Props {
 export default function WorkoutTab({ state, update }: Props) {
   const program = PROGRAM_MAP[state.programId]
   const [summary, setSummary] = useState<SessionLog | null>(null)
+  const [view, setView] = useState<'today' | 'overview'>('today')
 
   if (state.draft) {
     return (
@@ -54,11 +56,24 @@ export default function WorkoutTab({ state, update }: Props) {
   return (
     <div className="stack">
       <header className="page-head">
+        <p className="eyebrow">Chương trình</p>
         <h1>{program.name}</h1>
-        <p className="muted">{program.description}</p>
+        <div className="segmented two">
+          <button className={view === 'today' ? 'on' : ''} onClick={() => setView('today')}>
+            Tập hôm nay
+          </button>
+          <button className={view === 'overview' ? 'on' : ''} onClick={() => setView('overview')}>
+            Tổng quan plan
+          </button>
+        </div>
       </header>
 
       {summary && <SummaryCard log={summary} onClose={() => setSummary(null)} />}
+
+      {view === 'overview' ? (
+        <PlanOverview state={state} update={update} />
+      ) : (
+        <>
 
       <section className="card">
         <div className="row between">
@@ -108,6 +123,8 @@ export default function WorkoutTab({ state, update }: Props) {
           </ul>
         </section>
       ))}
+        </>
+      )}
     </div>
   )
 }

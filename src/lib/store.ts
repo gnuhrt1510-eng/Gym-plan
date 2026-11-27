@@ -13,6 +13,7 @@ export const DEFAULT_STATE: AppState = {
   meals: {},
   foodLog: {},
   bodyWeights: [],
+  trainingDays: [0, 1, 3, 4],
 }
 
 export function loadState(): AppState {

@@ -16,6 +16,8 @@ export interface ExerciseDef {
   name: string
   nameEn: string
   muscle: string
+  /** nhóm cơ chính để tính số set/tuần */
+  group: string
   /** kg added when every set hits the top of the rep range */
   increment: number
   startWeight: number
@@ -146,4 +148,6 @@ export interface AppState {
   meals: Record<string, MealDayState>
   foodLog: Record<string, FoodEntry[]>
   bodyWeights: BodyWeight[]
+  /** các thứ đi tập trong tuần, 0 = Thứ Hai … 6 = Chủ nhật */
+  trainingDays: number[]
 }

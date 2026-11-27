@@ -115,3 +115,17 @@ describe('food log', () => {
     for (const d of suggestFillers(300, 40)) expect(d.kcal).toBeLessThanOrEqual(400)
   })
 })
+
+describe('plan overview', () => {
+  it('xếp 4 buổi vào T2, T3, T5, T6 và đếm set theo nhóm cơ', async () => {
+    const { weekSchedule, setsPerGroup } = await import('../components/PlanOverview')
+    const { PROGRAM_MAP } = await import('../data/programs')
+    const sched = weekSchedule(PROGRAM_MAP.my4, [0, 1, 3, 4])
+    expect(sched.map((d) => d?.id ?? null)).toEqual(['my4-chest', 'my4-back', null, 'my4-legs', 'my4-shoulders', null, null])
+    // Buổi ngực không có bài vai
+    expect(PROGRAM_MAP.my4.days[0].exercises.some((e) => e.exerciseId === 'ohp' || e.exerciseId === 'lateral')).toBe(false)
+    const vol = Object.fromEntries(setsPerGroup(sched).map((v) => [v.group, v.sets]))
+    expect(vol['Ngực']).toBe(10)
+    expect(vol['Vai']).toBe(13)
+  })
+})
