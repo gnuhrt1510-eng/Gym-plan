@@ -12,21 +12,35 @@ interface DayInfo {
   runs: Run[]
   sets: number
   km: number
+  /** tổng phút tập (gym + chạy) */
+  minutes: number
 }
 
-/** Mức đậm của ô: 0 nghỉ · 1 có tập · 2 tập nhiều (≥ 14 set hoặc ≥ 5 km) · 3 vừa gym vừa chạy */
+/** Mức đậm của ô theo tổng thời gian tập trong ngày: 0 nghỉ · 1 dưới 1 tiếng · 2 từ 1 tiếng · 3 từ 1 tiếng rưỡi */
 export function dayLevel(d: DayInfo | undefined): 0 | 1 | 2 | 3 {
   if (!d || (d.sessions.length === 0 && d.runs.length === 0)) return 0
-  if (d.sessions.length > 0 && d.runs.length > 0) return 3
-  if (d.sets >= 14 || d.km >= 5) return 2
+  if (d.minutes >= 90) return 3
+  if (d.minutes >= 60) return 2
   return 1
+}
+
+/** Thời lượng một buổi gym (phút); thiếu giờ bắt đầu/kết thúc thì ước tính ~3 phút/set */
+export function sessionMinutes(l: SessionLog, doneSets: number): number {
+  const m = (l.finishedAt - l.startedAt) / 60000
+  return m > 0 && m < 6 * 60 ? m : doneSets * 3
+}
+
+export function formatMinutes(min: number): string {
+  const m = Math.round(min)
+  if (m < 60) return `${m} phút`
+  return `${Math.floor(m / 60)}h${m % 60 ? String(m % 60).padStart(2, '0') : ''}`
 }
 
 export function buildDays(logs: SessionLog[], runs: Run[]): Map<string, DayInfo> {
   const map = new Map<string, DayInfo>()
   const get = (date: string) => {
     let d = map.get(date)
-    if (!d) map.set(date, (d = { sessions: [], runs: [], sets: 0, km: 0 }))
+    if (!d) map.set(date, (d = { sessions: [], runs: [], sets: 0, km: 0, minutes: 0 }))
     return d
   }
   for (const l of logs) {
@@ -35,11 +49,13 @@ export function buildDays(logs: SessionLog[], runs: Run[]): Map<string, DayInfo>
     const d = get(l.date)
     d.sessions.push(l)
     d.sets += sets
+    d.minutes += sessionMinutes(l, sets)
   }
   for (const r of runs) {
     const d = get(toISODate(new Date(r.startedAt)))
     d.runs.push(r)
     d.km += r.distanceM / 1000
+    d.minutes += r.durationMs / 60000
   }
   return map
 }
@@ -201,6 +217,7 @@ export default function ActivityCalendar({ logs, runs, target }: { logs: Session
         <div className="day-detail">
           <b>
             {Number(picked.slice(8))}/{Number(picked.slice(5, 7))}/{picked.slice(0, 4)}
+            {info && dayLevel(info) > 0 && <span className="muted"> · tổng {formatMinutes(info.minutes)}</span>}
           </b>
           {!info || dayLevel(info) === 0 ? (
             <span className="muted small">Ngày nghỉ</span>
@@ -208,12 +225,13 @@ export default function ActivityCalendar({ logs, runs, target }: { logs: Session
             <ul>
               {info.sessions.map((s) => (
                 <li key={s.id}>
-                  <i className="g" /> {s.dayName} · {s.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0)} set
+                  <i className="g" /> {s.dayName} · {s.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0)} set ·{' '}
+                  {formatMinutes(sessionMinutes(s, s.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0)))}
                 </li>
               ))}
               {info.runs.map((r) => (
                 <li key={r.id}>
-                  <i className="r" /> {r.title} · {formatKm(r.distanceM)} km
+                  <i className="r" /> {r.title} · {formatKm(r.distanceM)} km · {formatMinutes(r.durationMs / 60000)}
                 </li>
               ))}
             </ul>
@@ -229,9 +247,7 @@ export default function ActivityCalendar({ logs, runs, target }: { logs: Session
           <i className="r" /> Chạy
         </span>
         <span className="heat-scale">
-          Ít <i className="hc l1" />
-          <i className="hc l2" />
-          <i className="hc l3" /> Nhiều
+          <i className="hc l1" /> &lt;1h <i className="hc l2" /> 1h <i className="hc l3" /> 1h30+
         </span>
       </div>
     </section>
