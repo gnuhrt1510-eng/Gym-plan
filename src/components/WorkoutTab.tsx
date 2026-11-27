@@ -415,7 +415,7 @@ function ActiveSession({
                   {def.nameEn} · mục tiêu {e.repsMin}-{e.repsMax} rep
                 </p>
               </div>
-              {EXERCISE_MUSCLES[e.exerciseId] && <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} views="both" size={150} labels />}
+              {EXERCISE_MUSCLES[e.exerciseId] && <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} views="both" size={230} labels />}
             </div>
             {EXERCISE_MUSCLES[e.exerciseId] && <MuscleMap targets={EXERCISE_MUSCLES[e.exerciseId]} figures={false} legend />}
             <div className="weight-ctrl">

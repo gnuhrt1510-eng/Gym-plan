@@ -2046,3 +2046,34 @@ i.r {
   width: 11px;
   cursor: default;
 }
+
+/* hình giải phẫu (đường cong) */
+.mm-fig path {
+  stroke: none;
+}
+.mm-o path {
+  fill: #3b3f46;
+}
+.mm-b path {
+  fill: #2b2e34;
+}
+.mm-s path {
+  fill: rgba(212, 255, 58, 0.42);
+}
+.mm-p path {
+  fill: var(--accent);
+}
+.mm-fig:not(.zoomed) .mm-p path {
+  filter: drop-shadow(0 0 6px rgba(212, 255, 58, 0.45));
+}
+.ex-open-head {
+  flex-direction: column;
+  align-items: stretch;
+}
+.ex-open-head .muscle-map {
+  padding: 12px 8px 8px;
+}
+.ex-open-head .mm-figs {
+  gap: 0;
+  justify-content: space-evenly;
+}
