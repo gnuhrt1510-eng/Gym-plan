@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { BODY, BODY_VIEWBOX } from '../data/bodyPaths'
 import { bestView, MUSCLE_LABEL, type MuscleId, type MuscleTargets } from '../data/muscles'
 
@@ -117,6 +118,15 @@ function Figure({
   const p = slugsFor(view, primary)
   const s = slugsFor(view, secondary)
   const full = BODY_VIEWBOX[view]
+  const uid = useId().replace(/:/g, '')
+  const lv = (ids: MuscleId[]): 'mm-p' | 'mm-s' | null =>
+    ids.some((m) => primary.has(m)) ? 'mm-p' : ids.some((m) => secondary.has(m)) ? 'mm-s' : null
+  // Vai chỉ có một vùng trên hình → tách nửa trong / nửa ngoài:
+  // mặt trước: trong = vai trước, ngoài = vai giữa; mặt sau: cả vai = vai sau, ngoài = vai giữa
+  const deltWhole = view === 'back' ? lv(['rearDelt']) : null
+  const deltInner = view === 'front' ? lv(['frontDelt']) : null
+  const deltOuter = lv(['sideDelt'])
+  const center = full[0] + full[2] / 2
   // Toàn thân: bỏ bớt khoảng trống trên đầu/dưới chân
   const vb = zoom ? zoomBox(view, primary.size ? primary : secondary, aspect) : [full[0] + 40, 80, full[2] - 80, 1290]
   const width = size * (vb[2] / vb[3])
@@ -129,13 +139,46 @@ function Figure({
         aria-hidden="true"
         preserveAspectRatio="xMidYMid slice"
       >
-        {Object.entries(BODY[view]).map(([slug, part]) => (
-          <g key={slug} className={p.has(slug) ? 'mm-p' : s.has(slug) ? 'mm-s' : BASE.has(slug) ? 'mm-b' : 'mm-o'}>
-            {part.d.map((d, i) => (
-              <path key={i} d={d} />
-            ))}
-          </g>
-        ))}
+        {Object.entries(BODY[view]).map(([slug, part]) => {
+          if (slug === 'deltoids') {
+            return (
+              <g key={slug}>
+                <defs>
+                  {part.boxes.map((b, i) => {
+                    const outerRight = (b[0] + b[2]) / 2 > center
+                    const mid = b[0] + (b[2] - b[0]) * 0.5
+                    const outer = outerRight ? [mid, b[2] + 20] : [b[0] - 20, mid]
+                    const inner = outerRight ? [b[0] - 20, mid] : [mid, b[2] + 20]
+                    return (
+                      <g key={i}>
+                        <clipPath id={`${uid}-o${i}`}>
+                          <rect x={outer[0]} y={b[1] - 20} width={outer[1] - outer[0]} height={b[3] - b[1] + 40} />
+                        </clipPath>
+                        <clipPath id={`${uid}-i${i}`}>
+                          <rect x={inner[0]} y={b[1] - 20} width={inner[1] - inner[0]} height={b[3] - b[1] + 40} />
+                        </clipPath>
+                      </g>
+                    )
+                  })}
+                </defs>
+                {part.d.map((d, i) => (
+                  <g key={i}>
+                    <path d={d} className={`mm-path ${deltWhole ?? 'mm-o'}`} />
+                    {deltInner && <path d={d} className={`mm-path ${deltInner}`} clipPath={`url(#${uid}-i${i})`} />}
+                    {deltOuter && <path d={d} className={`mm-path ${deltOuter}`} clipPath={`url(#${uid}-o${i})`} />}
+                  </g>
+                ))}
+              </g>
+            )
+          }
+          return (
+            <g key={slug} className={p.has(slug) ? 'mm-p' : s.has(slug) ? 'mm-s' : BASE.has(slug) ? 'mm-b' : 'mm-o'}>
+              {part.d.map((d, i) => (
+                <path key={i} d={d} />
+              ))}
+            </g>
+          )
+        })}
       </svg>
       {label && <figcaption>{view === 'front' ? 'Trước' : 'Sau'}</figcaption>}
     </figure>
