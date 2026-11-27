@@ -32,7 +32,9 @@ export function loadState(): AppState {
 
 /** Chia dữ liệu thành các document nhỏ để lưu lên Claude */
 export function appToChunks(s: AppState): Chunks {
-  const { logs, foodLog, ...core } = s
+  // draft (buổi đang tập dở) giữ riêng trên từng máy
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { logs, foodLog, draft, ...core } = s
   const chunks: Chunks = { core: core as unknown as Record<string, unknown> }
   for (const [m, items] of Object.entries(byMonth(logs, (l) => l.date))) chunks[`logs-${m}`] = { items }
   const days = Object.keys(foodLog).filter((d) => foodLog[d].length > 0)
@@ -49,7 +51,7 @@ export function appFromChunks(c: Chunks): AppState {
     if (k.startsWith('food-')) Object.assign(foodLog, body.days as Record<string, FoodEntry[]>)
   }
   logs.sort((a, b) => a.finishedAt - b.finishedAt)
-  return { ...DEFAULT_STATE, ...core, logs, foodLog }
+  return { ...DEFAULT_STATE, ...core, draft: null, logs, foodLog }
 }
 
 /** Máy này chưa có dữ liệu gì của người dùng */
@@ -72,7 +74,7 @@ export function useAppState() {
       /* storage full / blocked — keep in memory */
     }
   }, [state])
-  useCloudSync('app', state, setState, appToChunks, appFromChunks, isPristine)
+  useCloudSync('app', state, (remote) => setState((cur) => ({ ...remote, draft: cur.draft })), appToChunks, appFromChunks, isPristine)
   return [state, setState] as const
 }
 
