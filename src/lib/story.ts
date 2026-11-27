@@ -1,6 +1,6 @@
 import { fitView, formatDuration, formatKm, formatPace, paceSecPerKm, project, type Run } from './run'
 
-export type StoryVariant = 'dark' | 'sticker'
+export type StoryVariant = 'overlay' | 'dark' | 'sticker'
 
 const W = 1080
 const H = 1920
@@ -17,7 +17,94 @@ function dateLabel(ts: number): string {
  *  - dark: nền tối, đầy đủ thông số — đăng thẳng
  *  - sticker: nền trong suốt — dán đè lên ảnh/video của bạn trên Instagram
  */
-export async function renderStory(run: Run, variant: StoryVariant): Promise<Blob> {
+/**
+ * Kiểu Strava: nền trong suốt (hoặc ảnh của bạn), đường chạy trắng mảnh,
+ * hàng thông số "Chạy · Pace · Thời gian" ở dưới.
+ */
+async function renderOverlay(run: Run, photo?: CanvasImageSource & { width: number; height: number }): Promise<Blob> {
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')!
+  try {
+    await document.fonts?.ready
+  } catch {
+    /* font dự phòng */
+  }
+  if (photo) {
+    // phủ kín khung, cắt phần thừa (object-fit: cover)
+    const scale = Math.max(W / photo.width, H / photo.height)
+    const pw = photo.width * scale
+    const ph = photo.height * scale
+    ctx.drawImage(photo, (W - pw) / 2, (H - ph) / 2, pw, ph)
+    // tối nhẹ phần dưới để chữ dễ đọc
+    const g = ctx.createLinearGradient(0, H * 0.62, 0, H)
+    g.addColorStop(0, 'rgba(0,0,0,0)')
+    g.addColorStop(1, 'rgba(0,0,0,0.45)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, W, H)
+  }
+
+  const shadow = (blur: number) => {
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'
+    ctx.shadowBlur = blur
+    ctx.shadowOffsetY = 2
+  }
+
+  // ---- đường chạy trắng ----
+  const box = { x: 230, y: 250, w: 620, h: 1120 }
+  if (run.points.length > 1) {
+    const view = fitView(run.points, box.w, box.h, 0.02, 18)
+    const xy = run.points.map((p) => {
+      const [x, y] = project(p[0], p[1], view.zoom)
+      return [box.x + x - view.x0, box.y + y - view.y0, p[3]] as const
+    })
+    ctx.save()
+    shadow(10)
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 8
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
+    ctx.beginPath()
+    xy.forEach(([x, y, seg], i) => {
+      if (i === 0 || seg !== xy[i - 1][2]) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    })
+    ctx.stroke()
+    // điểm kết thúc: vòng tròn rỗng
+    const [ex, ey] = xy[xy.length - 1]
+    ctx.lineWidth = 6
+    ctx.beginPath()
+    ctx.arc(ex, ey, 13, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.restore()
+  }
+
+  // ---- hàng thông số ----
+  const stats: [string, string][] = [
+    ['Chạy', `${formatKm(run.distanceM)} km`],
+    ['Pace', formatPace(paceSecPerKm(run.distanceM, run.durationMs))],
+    ['Thời gian', formatDuration(run.durationMs)],
+  ]
+  const x0 = 165
+  const xs = [x0, x0 + 300, x0 + 495]
+  ctx.save()
+  shadow(12)
+  ctx.fillStyle = '#ffffff'
+  ctx.textBaseline = 'alphabetic'
+  stats.forEach(([label, value], i) => {
+    ctx.font = "700 40px 'Inter', system-ui, sans-serif"
+    ctx.fillText(label, xs[i], 1555)
+    ctx.font = "800 62px 'Inter', system-ui, sans-serif"
+    ctx.fillText(value, xs[i], 1632)
+  })
+  ctx.restore()
+
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('canvas'))), 'image/png'))
+}
+
+export async function renderStory(run: Run, variant: StoryVariant, photo?: CanvasImageSource & { width: number; height: number }): Promise<Blob> {
+  if (variant === 'overlay') return renderOverlay(run, photo)
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H

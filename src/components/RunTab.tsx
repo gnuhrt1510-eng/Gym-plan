@@ -321,11 +321,24 @@ function RunDetail({ run, onBack, onRename, onDelete }: { run: Run; onBack: () =
     [preview],
   )
 
-  const makeStory = async (variant: StoryVariant) => {
+  const [photo, setPhoto] = useState<{ img: HTMLImageElement; name: string } | null>(null)
+
+  const loadPhoto = (file: File) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      setPhoto({ img, name: file.name })
+      void makeStory('overlay', img)
+    }
+    img.onerror = () => setMsg('Không đọc được ảnh này. Thử ảnh JPG hoặc PNG khác.')
+    img.src = url
+  }
+
+  const makeStory = async (variant: StoryVariant, img: HTMLImageElement | null = variant === 'overlay' ? (photo?.img ?? null) : null) => {
     setBusy(true)
     setMsg('')
     try {
-      const blob = await renderStory(run, variant)
+      const blob = await renderStory(run, variant, img ?? undefined)
       setPreview({ variant, blob, url: URL.createObjectURL(blob) })
     } finally {
       setBusy(false)
@@ -334,7 +347,7 @@ function RunDetail({ run, onBack, onRename, onDelete }: { run: Run; onBack: () =
 
   const share = async () => {
     if (!preview) return
-    const name = `chay-${toISODate(new Date(run.startedAt))}-${preview.variant}.png`
+    const name = `chay-${toISODate(new Date(run.startedAt))}-${preview.variant === 'overlay' ? (photo ? 'anh' : 'trong-suot') : preview.variant}.png`
     const res = await shareOrSave(preview.blob, name)
     setMsg(
       res === 'shared'
@@ -413,18 +426,40 @@ function RunDetail({ run, onBack, onRename, onDelete }: { run: Run; onBack: () =
 
       <section className="card">
         <h2>Ảnh story</h2>
-        <p className="muted small">Ảnh dọc 1080×1920 để đăng story. Bản "Trong suốt" dùng để dán đè lên ảnh hoặc video của bạn.</p>
+        <p className="muted small">
+          Ảnh dọc 1080×1920. Kiểu <b>Strava</b> là PNG nền trong suốt (đường chạy trắng + Chạy · Pace · Thời gian) để bạn ghép lên ảnh bất kỳ, hoặc bấm “Ghép vào ảnh” để app ghép sẵn.
+        </p>
         <div className="seg">
+          <button className={preview?.variant === 'overlay' ? 'on' : ''} disabled={busy} onClick={() => void makeStory('overlay')}>
+            Kiểu Strava
+          </button>
           <button className={preview?.variant === 'dark' ? 'on' : ''} disabled={busy} onClick={() => void makeStory('dark')}>
             Nền tối
           </button>
           <button className={preview?.variant === 'sticker' ? 'on' : ''} disabled={busy} onClick={() => void makeStory('sticker')}>
-            Trong suốt
+            Sticker xanh
           </button>
+        </div>
+        <div className="row gap wrap">
+          <label className="btn small">
+            {photo ? 'Đổi ảnh nền' : 'Ghép vào ảnh…'}
+            <input id="story-photo" type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && loadPhoto(e.target.files[0])} />
+          </label>
+          {photo && (
+            <button
+              className="btn ghost small"
+              onClick={() => {
+                setPhoto(null)
+                void makeStory('overlay', null)
+              }}
+            >
+              Bỏ ảnh nền (PNG trong suốt)
+            </button>
+          )}
         </div>
         {preview && (
           <>
-            <div className={`story-preview ${preview.variant}`}>
+            <div className={`story-preview ${preview.variant === 'overlay' && !photo ? 'sticker' : preview.variant}`}>
               <img src={preview.url} alt="Xem trước ảnh story" />
             </div>
             <button className="btn-start" onClick={() => void share()}>
