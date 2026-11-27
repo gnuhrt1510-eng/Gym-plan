@@ -180,3 +180,29 @@ describe('activity calendar', () => {
     expect(weekStreak(days, 4, '2026-11-25')).toBe(1) // tuần trước đạt 4, tuần này mới 2
   })
 })
+
+describe('ước tính calo từ mô tả', () => {
+  it('2 bát cơm với 150g thịt bò xào rau cần', async () => {
+    const { estimateLocal, sumItems } = await import('./estimate')
+    const e = estimateLocal('2 bát cơm với 150g thịt bò xào rau cần')
+    const names = e.items.map((i) => i.name)
+    expect(names).toEqual(['Cơm trắng', 'Thịt bò', 'Dầu ăn (xào/chiên)', 'Rau'])
+    const t = sumItems(e.items)
+    expect(t.kcal).toBeGreaterThan(700)
+    expect(t.kcal).toBeLessThan(900)
+    expect(Math.round(t.protein)).toBeGreaterThanOrEqual(45)
+    expect(e.unknown).toEqual([])
+  })
+
+  it('không dấu, nhiều món, số bằng chữ', async () => {
+    const { estimateLocal } = await import('./estimate')
+    const e = estimateLocal('pho bo, hai qua trung luoc + 1 ly tra sua')
+    expect(e.items.map((i) => i.name)).toEqual(['Phở bò', 'Trứng gà', 'Trà sữa trân châu'])
+    expect(e.items[1].kcal).toBeCloseTo(144, 0)
+  })
+
+  it('báo phần không nhận ra', async () => {
+    const { estimateLocal } = await import('./estimate')
+    expect(estimateLocal('sầu riêng').unknown).toEqual(['sau rieng'])
+  })
+})

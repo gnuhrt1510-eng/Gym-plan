@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { DISHES, type Dish } from '../data/dishes'
 import { SLOT_LABEL } from '../data/foods'
 import { addDays, formatDate, today } from '../lib/date'
-import { entryMacros, frequentDishes, searchDishes, suggestFillers, totalMacros, verdict } from '../lib/foodlog'
+import { entryMacros, frequentDishes, suggestFillers, totalMacros, verdict } from '../lib/foodlog'
+import { estimateLocal, estimateWithClaude, sumItems, type Estimate } from '../lib/estimate'
 import { computeTargets, formatAmount, GOAL_LABEL, nextTemplateId, planDay, shoppingList, type Macros } from '../lib/nutrition'
 import { uid, type Update } from '../lib/store'
 import type { AppState, FoodEntry, MealDayState } from '../types'
@@ -18,13 +19,6 @@ const fmt = (n: number) => Math.round(n).toLocaleString('vi-VN')
 const clock = (t: number) => {
   const d = new Date(t)
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
-
-/** "2 trung" → { qty: 2, text: "trung" } */
-function parseQuery(q: string): { qty: number; text: string } {
-  const m = q.trim().match(/^(\d+(?:[.,]\d+)?)\s*(?:x\s*)?(.*)$/i)
-  if (m && m[2]) return { qty: Math.min(20, Number(m[1].replace(',', '.')) || 1), text: m[2] }
-  return { qty: 1, text: q }
 }
 
 function MacroBar({ label, value, target, unit, className }: { label: string; value: number; target: number; unit: string; className: string }) {
@@ -46,7 +40,10 @@ function MacroBar({ label, value, target, unit, className }: { label: string; va
 
 export default function MealTab({ state, update, onOpenSettings }: { state: AppState; update: Update; onOpenSettings: () => void }) {
   const [date, setDate] = useState(today())
-  const [query, setQuery] = useState('')
+  const [desc, setDesc] = useState('')
+  const [est, setEst] = useState<Estimate | null>(null)
+  const [estBusy, setEstBusy] = useState(false)
+  const [estNote, setEstNote] = useState('')
   const [custom, setCustom] = useState<{ name: string; kcal: string; protein: string } | null>(null)
   const [showPlan, setShowPlan] = useState(false)
   const [showShopping, setShowShopping] = useState(false)
@@ -66,14 +63,39 @@ export default function MealTab({ state, update, onOpenSettings }: { state: AppS
   }
   const addDish = (dish: Dish, qty = 1) => {
     addEntry(`${dish.name} (${dish.portion})`, dish, qty)
-    setQuery('')
   }
   const changeQty = (id: string, delta: number) =>
     setEntries((list) => list.map((e) => (e.id === id ? { ...e, qty: Math.max(0.5, Math.round((e.qty + delta) * 2) / 2) } : e)))
   const remove = (id: string) => setEntries((list) => list.filter((e) => e.id !== id))
 
-  const { qty, text } = parseQuery(query)
-  const results = searchDishes(text)
+  const estTotal = est ? sumItems(est.items) : { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+
+  const compute = async () => {
+    const d = desc.trim()
+    if (!d || estBusy) return
+    setEstBusy(true)
+    setEstNote('')
+    try {
+      let r: Estimate | null = null
+      try {
+        r = await estimateWithClaude(d)
+      } catch (e) {
+        const code = (e as { code?: string })?.code
+        if (code === 'rate_limited') setEstNote('Claude đang bận, dùng ước tính nhanh.')
+      }
+      setEst(r ?? estimateLocal(d))
+    } finally {
+      setEstBusy(false)
+    }
+  }
+
+  const addEstimate = () => {
+    if (!est || est.items.length === 0) return
+    const d = desc.trim()
+    addEntry(d.length > 70 ? d.slice(0, 67) + '…' : d, sumItems(est.items))
+    setDesc('')
+    setEst(null)
+  }
   const frequent = frequentDishes(state.foodLog).filter((f) => f.count >= 2).slice(0, 6)
   const fillers = v.status === 'short' ? suggestFillers(v.diff, proteinLeft) : []
 
@@ -86,7 +108,6 @@ export default function MealTab({ state, update, onOpenSettings }: { state: AppS
     const rest = Math.max(0, kcal - protein * 4)
     addEntry(custom.name.trim(), { kcal, protein, carbs: (rest * 0.6) / 4, fat: (rest * 0.4) / 9 })
     setCustom(null)
-    setQuery('')
   }
 
   const dayState = state.meals[date] ?? EMPTY_DAY
@@ -168,46 +189,73 @@ export default function MealTab({ state, update, onOpenSettings }: { state: AppS
       </section>
 
       <section className="card">
-        <h2>Thêm món vừa ăn</h2>
-        <input
-          id="food-search"
-          type="search"
-          autoComplete="off"
-          placeholder="Gõ tên món, VD: pho, com ga, 2 trung…"
-          value={query}
+        <h2>Thêm bữa vừa ăn</h2>
+        <p className="muted small">Mô tả món bạn ăn, app tự tính calo. VD: “2 bát cơm với 150g thịt bò xào rau cần”, “phở bò + 2 quả trứng”.</p>
+        <textarea
+          id="meal-desc"
+          className="meal-desc"
+          rows={3}
+          placeholder="Hôm nay ăn gì…"
+          value={desc}
           onChange={(e) => {
-            setQuery(e.target.value)
-            setCustom(null)
+            setDesc(e.target.value)
+            setEst(null)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void compute()
           }}
         />
-        {query.trim() ? (
-          <ul className="pick-list">
-            {results.map((d) => (
-              <li key={d.id}>
-                <button onClick={() => addDish(d, qty)}>
+        <button className="btn primary" onClick={() => void compute()} disabled={!desc.trim() || estBusy}>
+          {estBusy ? 'Đang tính…' : 'Tính calo'}
+        </button>
+        {estNote && <p className="small warn-text">{estNote}</p>}
+
+        {est && (
+          <div className="estimate">
+            <ul className="ex-list">
+              {est.items.map((it, i) => (
+                <li key={i}>
                   <span>
-                    {qty !== 1 && <b>{qty} × </b>}
-                    {d.name} <span className="muted small">· {d.portion}</span>
+                    {it.name}
+                    {it.amount && <span className="muted small"> · {it.amount}</span>}
                   </span>
                   <span className="num small">
-                    {fmt(d.kcal * qty)} kcal <b className="plus">+</b>
+                    <b>{fmt(it.kcal)}</b> kcal · P {fmt(it.protein)}g
                   </span>
-                </button>
-              </li>
-            ))}
-            {results.length === 0 && <li className="muted small pad">Không có “{text}” trong danh sách.</li>}
-          </ul>
-        ) : (
-          <div className="chips">
-            {(frequent.length ? frequent.map((f) => ({ key: f.name, label: f.name.replace(/ \(.*\)$/, ''), kcal: f.entry.kcal, add: () => addEntry(f.entry.name, f.entry) })) : POPULAR.map((d) => ({ key: d.id, label: d.name, kcal: d.kcal, add: () => addDish(d) }))).map(
-              (c) => (
-                <button key={c.key} className="chip" onClick={c.add}>
-                  + {c.label} <span className="muted">{fmt(c.kcal)}</span>
-                </button>
-              ),
-            )}
+                </li>
+              ))}
+            </ul>
+            {est.unknown.length > 0 && <p className="small warn-text">Chưa nhận ra: “{est.unknown.join('”, “')}”. Tự nhập calo cho phần này ở dưới nếu cần.</p>}
+            <div className="estimate-total">
+              <span className="num">
+                <b>{fmt(estTotal.kcal)}</b> kcal
+              </span>
+              <span className="muted small num">
+                P {fmt(estTotal.protein)}g · C {fmt(estTotal.carbs)}g · F {fmt(estTotal.fat)}g
+              </span>
+            </div>
+            <div className="row gap">
+              <button className="btn ghost grow" onClick={() => setEst(null)}>
+                Sửa mô tả
+              </button>
+              <button className="btn primary grow" onClick={addEstimate} disabled={est.items.length === 0}>
+                + Thêm vào nhật ký
+              </button>
+            </div>
+            <p className="muted small">{est.source === 'claude' ? 'Claude ước tính, sai số khoảng ±15%.' : 'Ước tính nhanh theo khẩu phần phổ biến, sai số khoảng ±20%.'}</p>
           </div>
         )}
+
+        <p className="eyebrow">Hoặc thêm nhanh</p>
+        <div className="chips">
+          {(frequent.length ? frequent.map((f) => ({ key: f.name, label: f.name.replace(/ \(.*\)$/, ''), kcal: f.entry.kcal, add: () => addEntry(f.entry.name, f.entry) })) : POPULAR.map((d) => ({ key: d.id, label: d.name, kcal: d.kcal, add: () => addDish(d) }))).map(
+            (c) => (
+              <button key={c.key} className="chip" onClick={c.add}>
+                + {c.label} <span className="muted">{fmt(c.kcal)}</span>
+              </button>
+            ),
+          )}
+        </div>
 
         {custom ? (
           <div className="custom-form">
@@ -233,8 +281,8 @@ export default function MealTab({ state, update, onOpenSettings }: { state: AppS
             </div>
           </div>
         ) : (
-          <button className="link small left" onClick={() => setCustom({ name: text.trim(), kcal: '', protein: '' })}>
-            Món khác, tự nhập calo
+          <button className="link small left" onClick={() => setCustom({ name: '', kcal: '', protein: '' })}>
+            Tự nhập calo
           </button>
         )}
       </section>
