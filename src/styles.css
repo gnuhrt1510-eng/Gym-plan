@@ -2115,3 +2115,24 @@ h2,
 .ex-list li {
   padding: 12px 0;
 }
+
+/* hình nhóm cơ giãn hết thẻ */
+.muscle-map.fill,
+.muscle-map.fill .mm-figs,
+.mm-fig.fill {
+  display: block;
+  width: 100%;
+}
+.mm-fig.fill svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.muscle-card {
+  flex: 0 0 calc(50% - 5px);
+  min-width: 150px;
+  gap: 10px;
+}
+.muscle-card .mm-fig.zoomed svg {
+  border-radius: 14px;
+}

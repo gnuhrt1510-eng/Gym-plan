@@ -33,8 +33,6 @@ const SLUGS: Record<View, Partial<Record<MuscleId, string[]>>> = {
   },
 }
 
-/** Vùng có ở cả hai bên tay/chân: phóng to chỉ cần một bên */
-const LIMB = new Set(['biceps', 'triceps', 'forearm', 'deltoids', 'quadriceps', 'hamstring', 'calves', 'tibialis', 'adductors'])
 /** Phần không phải cơ (đầu, tay, chân…) tô tối hơn */
 const BASE = new Set(['head', 'hair', 'hands', 'feet', 'ankles', 'knees', 'neck'])
 
@@ -49,20 +47,15 @@ export function zoomBox(view: View, ids: Set<MuscleId>, aspect = 0.8): [number, 
   const [vx, vy, vw, vh] = BODY_VIEWBOX[view]
   const slugs = [...slugsFor(view, ids)]
   if (slugs.length === 0) return [vx, vy, vw, vh]
-  const center = vx + vw / 2
-  const oneSide = slugs.every((s) => LIMB.has(s))
-  let boxes = slugs.flatMap((s) => BODY[view][s]?.boxes ?? [])
-  if (oneSide) {
-    const right = boxes.filter((b) => (b[0] + b[2]) / 2 > center)
-    if (right.length) boxes = right
-  }
+  // Lấy cả hai bên cơ thể để khung luôn kín người, không bị khoảng trống
+  const boxes = slugs.flatMap((s) => BODY[view][s]?.boxes ?? [])
   if (boxes.length === 0) return [vx, vy, vw, vh]
   const pad = 36
   let x0 = Math.min(...boxes.map((b) => b[0])) - pad
   let x1 = Math.max(...boxes.map((b) => b[2])) + pad
   let y0 = Math.min(...boxes.map((b) => b[1])) - pad
   let y1 = Math.max(...boxes.map((b) => b[3])) + pad
-  const minH = 300
+  const minH = 260
   if (y1 - y0 < minH) {
     const c = (y0 + y1) / 2
     y0 = c - minH / 2
@@ -89,6 +82,16 @@ export function zoomBox(view: View, ids: Set<MuscleId>, aspect = 0.8): [number, 
     y0 -= y1 - (vy + 1360)
     y1 = vy + 1360
   }
+  // khung quá rộng so với thân người: kéo về giữa cơ thể
+  const cx = vx + vw / 2
+  if (x1 - x0 < vw) {
+    if (x0 < vx) { x1 += vx - x0; x0 = vx }
+    if (x1 > vx + vw) { x0 -= x1 - (vx + vw); x1 = vx + vw }
+  } else {
+    const bw = x1 - x0
+    x0 = cx - bw / 2
+    x1 = x0 + bw
+  }
   return [x0, y0, x1 - x0, y1 - y0]
 }
 
@@ -99,6 +102,8 @@ function Figure({
   size,
   label,
   zoom,
+  aspect,
+  fill,
 }: {
   view: View
   primary: Set<MuscleId>
@@ -106,16 +111,24 @@ function Figure({
   size: number
   label?: boolean
   zoom?: boolean
+  aspect: number
+  fill?: boolean
 }) {
   const p = slugsFor(view, primary)
   const s = slugsFor(view, secondary)
   const full = BODY_VIEWBOX[view]
   // Toàn thân: bỏ bớt khoảng trống trên đầu/dưới chân
-  const vb = zoom ? zoomBox(view, primary.size ? primary : secondary) : [full[0] + 40, 80, full[2] - 80, 1290]
+  const vb = zoom ? zoomBox(view, primary.size ? primary : secondary, aspect) : [full[0] + 40, 80, full[2] - 80, 1290]
   const width = size * (vb[2] / vb[3])
   return (
-    <figure className={`mm-fig ${zoom ? 'zoomed' : ''}`}>
-      <svg viewBox={vb.map((n) => n.toFixed(1)).join(' ')} width={width} height={size} aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+    <figure className={`mm-fig ${zoom ? 'zoomed' : ''} ${fill ? 'fill' : ''}`}>
+      <svg
+        viewBox={vb.map((n) => n.toFixed(1)).join(' ')}
+        width={fill ? undefined : width}
+        height={fill ? undefined : size}
+        aria-hidden="true"
+        preserveAspectRatio="xMidYMid slice"
+      >
         {Object.entries(BODY[view]).map(([slug, part]) => (
           <g key={slug} className={p.has(slug) ? 'mm-p' : s.has(slug) ? 'mm-s' : BASE.has(slug) ? 'mm-b' : 'mm-o'}>
             {part.d.map((d, i) => (
@@ -138,6 +151,8 @@ export default function MuscleMap({
   legend = false,
   figures = true,
   zoom = false,
+  aspect = 0.8,
+  fill = false,
 }: {
   targets?: MuscleTargets
   /** tô một danh sách cơ như cơ chính (dùng cho thẻ nhóm cơ) */
@@ -150,6 +165,10 @@ export default function MuscleMap({
   figures?: boolean
   /** phóng to vào vùng cơ được tô */
   zoom?: boolean
+  /** tỉ lệ rộng/cao của khung phóng to */
+  aspect?: number
+  /** giãn hết chiều rộng khung chứa */
+  fill?: boolean
 }) {
   const tg = targets ?? { primary: muscles ?? [], secondary: [] }
   const primary = new Set(tg.primary)
@@ -157,11 +176,11 @@ export default function MuscleMap({
   const list: View[] = views === 'both' ? ['front', 'back'] : views === 'auto' ? [bestView(tg)] : [views]
   const title = [...primary].map((m) => MUSCLE_LABEL[m]).join(', ')
   return (
-    <div className="muscle-map" role="img" aria-label={title ? `Cơ tác động: ${title}` : 'Hình nhóm cơ'}>
+    <div className={`muscle-map ${fill ? 'fill' : ''}`} role="img" aria-label={title ? `Cơ tác động: ${title}` : 'Hình nhóm cơ'}>
       {figures && (
         <div className="mm-figs">
           {list.map((v) => (
-            <Figure key={v} view={v} primary={primary} secondary={secondary} size={size} label={labels} zoom={zoom} />
+            <Figure key={v} view={v} primary={primary} secondary={secondary} size={size} label={labels} zoom={zoom} aspect={aspect} fill={fill} />
           ))}
         </div>
       )}
