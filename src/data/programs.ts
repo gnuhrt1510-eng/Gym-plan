@@ -18,7 +18,7 @@ export const EXERCISES: ExerciseDef[] = [
   { id: 'reardelt', group: 'Vai', name: 'Vai sau máy pec deck', nameEn: 'Reverse Pec Deck', muscle: 'Vai sau', increment: 2.5, startWeight: 15 },
   { id: 'abs', group: 'Bụng', name: 'Gập bụng cáp', nameEn: 'Cable Crunch', muscle: 'Bụng', increment: 2.5, startWeight: 20 },
   { id: 'ohp', group: 'Vai', name: 'Đẩy vai tạ đòn', nameEn: 'Overhead Press', muscle: 'Vai', increment: 2.5, startWeight: 25 },
-  { id: 'lateral', group: 'Vai', name: 'Dang tay vai', nameEn: 'Lateral Raise', muscle: 'Vai giữa', increment: 1, startWeight: 6 },
+  { id: 'lateral', group: 'Vai', name: 'Bay vai giữa', nameEn: 'Lateral Raise', muscle: 'Vai giữa', increment: 1, startWeight: 6 },
   { id: 'fly', group: 'Ngực', name: 'Ép ngực cáp / Pec deck', nameEn: 'Cable Fly / Pec Deck', muscle: 'Ngực', increment: 2.5, startWeight: 10 },
   { id: 'pushdown', group: 'Tay sau', name: 'Kéo cáp tay sau', nameEn: 'Triceps Pushdown', muscle: 'Tay sau', increment: 2.5, startWeight: 15 },
   { id: 'pullup', group: 'Lưng', name: 'Kéo xà', nameEn: 'Pull-up', muscle: 'Lưng xô', increment: 2.5, startWeight: 0, bodyweight: true },
