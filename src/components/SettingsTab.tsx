@@ -42,7 +42,7 @@ export default function SettingsTab({ state, update, replace }: { state: AppStat
   return (
     <div className="stack">
       <header className="page-head">
-        <h1>Cài đặt</h1>
+        <h1 className="display">Cài đặt</h1>
       </header>
 
       <section className="card">

@@ -1,17 +1,19 @@
-import { useState } from 'react'
+import { useState, type ComponentType } from 'react'
 import { useAppState, type Update } from './lib/store'
+import { formatDate, today } from './lib/date'
 import WorkoutTab from './components/WorkoutTab'
 import ProgressTab from './components/ProgressTab'
 import MealTab from './components/MealTab'
 import SettingsTab from './components/SettingsTab'
+import { IconBolt, IconBowl, IconChart, IconDumbbell, IconSliders } from './components/Icons'
 
 type Tab = 'workout' | 'progress' | 'meal' | 'settings'
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'workout', label: 'Tập luyện', icon: '🏋️' },
-  { id: 'progress', label: 'Tiến độ', icon: '📈' },
-  { id: 'meal', label: 'Ăn uống', icon: '🥗' },
-  { id: 'settings', label: 'Cài đặt', icon: '⚙️' },
+const TABS: { id: Tab; label: string; Icon: ComponentType<{ size?: number }> }[] = [
+  { id: 'workout', label: 'Tập', Icon: IconDumbbell },
+  { id: 'meal', label: 'Ăn uống', Icon: IconBowl },
+  { id: 'progress', label: 'Tiến độ', Icon: IconChart },
+  { id: 'settings', label: 'Cài đặt', Icon: IconSliders },
 ]
 
 export default function App() {
@@ -21,19 +23,33 @@ export default function App() {
 
   return (
     <div className="app">
+      <div className="topbar">
+        <span className="brand">
+          <IconBolt size={18} /> GYM PLAN
+        </span>
+        <span className="topbar-date">{formatDate(today())}</span>
+      </div>
       <main className="content">
         {tab === 'workout' && <WorkoutTab state={state} update={update} />}
         {tab === 'progress' && <ProgressTab state={state} update={update} />}
-        {tab === 'meal' && <MealTab state={state} update={update} onOpenSettings={() => setTab('settings')} />}
+        {tab === 'meal' && <MealTab state={state} update={update} onOpenSettings={() => {
+              setTab('settings')
+              window.scrollTo(0, 0)
+            }} />}
         {tab === 'settings' && <SettingsTab state={state} update={update} replace={setState} />}
       </main>
-      <nav className="tabbar">
-        {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
-            <span className="tab-icon">{t.icon}</span>
-            <span>{t.label}</span>
-          </button>
-        ))}
+      <nav className="tabbar" aria-label="Điều hướng">
+        <div className="tabbar-inner">
+          {TABS.map(({ id, label, Icon }) => (
+            <button key={id} className={tab === id ? 'active' : ''} onClick={() => {
+                setTab(id)
+                window.scrollTo(0, 0)
+              }} aria-current={tab === id ? 'page' : undefined}>
+              <Icon size={20} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
       </nav>
     </div>
   )

@@ -7,6 +7,7 @@ import { computeTargets, formatAmount, GOAL_LABEL, nextTemplateId, planDay, shop
 import { uid, type Update } from '../lib/store'
 import type { AppState, FoodEntry, MealDayState } from '../types'
 import ConfirmButton from './ConfirmButton'
+import Ring from './Ring'
 
 const EMPTY_DAY: MealDayState = { overrides: {}, eaten: {} }
 const POPULAR = ['com-van-phong', 'pho-bo', 'banh-mi-thit', 'com-tam', 'uc-ga', 'trung', 'com-trang', 'sua-tuoi', 'whey', 'chuoi'].map(
@@ -98,12 +99,11 @@ export default function MealTab({ state, update, onOpenSettings }: { state: AppS
       return { ...s, meals: { ...s.meals, [date]: { ...d, overrides: { ...d.overrides, [slot]: nextTemplateId(slot, currentId) } } } }
     })
 
-  const pct = Math.min(100, (eaten.kcal / targets.kcal) * 100)
 
   return (
     <div className="stack">
       <header className="page-head">
-        <h1>Ăn uống</h1>
+        <h1 className="display">Ăn uống</h1>
         <p className="muted">
           Mục tiêu <b>{GOAL_LABEL[state.profile.goal]}</b>: {fmt(targets.kcal)} kcal · {targets.protein}g protein/ngày ·{' '}
           <button className="link" onClick={onOpenSettings}>
@@ -126,23 +126,29 @@ export default function MealTab({ state, update, onOpenSettings }: { state: AppS
       </div>
 
       <section className={`card verdict ${v.status}`}>
-        <div className="kcal-big">
-          <span className="num">{fmt(eaten.kcal)}</span>
-          <span className="muted">/ {fmt(targets.kcal)} kcal</span>
+        <div className="kcal-wrap">
+          <Ring value={eaten.kcal / targets.kcal} size={132} stroke={11}>
+            <span className="ring-big num">{fmt(Math.abs(targets.kcal - eaten.kcal))}</span>
+            <span className="ring-label">{eaten.kcal > targets.kcal ? 'kcal dư' : 'kcal còn lại'}</span>
+          </Ring>
+          <div className="kcal-side">
+            <span className="eyebrow">Đã ăn</span>
+            <span className="kcal-eaten num">
+              {fmt(eaten.kcal)}
+              <small> / {fmt(targets.kcal)}</small>
+            </span>
+            <p className="verdict-text">
+              {entries.length === 0
+                ? 'Chưa ghi bữa nào'
+                : v.status === 'short'
+                  ? `Còn thiếu ${fmt(v.diff)} kcal`
+                  : v.status === 'over'
+                    ? `Dư ${fmt(v.diff)} kcal`
+                    : 'Đủ calo hôm nay'}
+            </p>
+            {entries.length > 0 && <span className="muted small">Đã ăn {entries.length} lần</span>}
+          </div>
         </div>
-        <div className="bar thick">
-          <div style={{ width: `${pct}%` }} />
-        </div>
-        <p className="verdict-text">
-          {entries.length === 0
-            ? 'Chưa ghi bữa nào. Ăn gì thì thêm ở dưới nhé.'
-            : v.status === 'short'
-              ? `Còn thiếu ${fmt(v.diff)} kcal`
-              : v.status === 'over'
-                ? `Dư ${fmt(v.diff)} kcal so với mục tiêu`
-                : '✓ Đủ calo hôm nay'}
-          {entries.length > 0 && <span className="muted small"> · đã ăn {entries.length} lần</span>}
-        </p>
         {entries.length > 0 && proteinLeft > 10 && <p className="small muted">Protein còn thiếu {fmt(proteinLeft)}g — nên ưu tiên món nhiều đạm.</p>}
         {fillers.length > 0 && entries.length > 0 && (
           <div className="chips">

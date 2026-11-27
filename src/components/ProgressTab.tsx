@@ -53,7 +53,7 @@ export default function ProgressTab({ state, update }: { state: AppState; update
   return (
     <div className="stack">
       <header className="page-head">
-        <h1>Tiến độ</h1>
+        <h1 className="display">Tiến độ</h1>
       </header>
 
       <div className="stats">
